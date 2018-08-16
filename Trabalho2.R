@@ -83,11 +83,6 @@ summary(val_data)
 #dim(test_data)
 #summary(test_data)
 
-# Remove Outliers? 
-# Max Residual sugar 31.600, 3rd quarter 8.300
-# Max free.sulfur.dioxide 131.00 3rd quarter 41.00
-# total.sulfur.dioxide min and max seem out of normal range
-
 # Normalize the data (Removing quality)
 meanTrainFeatures = colMeans(train_data[,-12]) #mean of each feature
 stdTrainFeatures = apply(train_data[,-12], 2, sd) #std of each feature
@@ -134,4 +129,87 @@ smoted_data <- SMOTE(quality~., train_data, perc.over=400, perc.under = 125)
 
 logistic.train(smoted_data, val_data)
 
+#############################################################
+# Remove Outliers from Original data                        #
+#############################################################
+train_data <- read.csv("wineQuality_train.data", header = TRUE)
 
+dim(train_data)
+summary(train_data)
+# Remove Outliers? 
+# Max Residual sugar 31.600, 3rd quarter 8.300
+# Max free.sulfur.dioxide 131.00 3rd quarter 41.00
+# total.sulfur.dioxide min and max seem out of normal range
+mean_acidity <- mean(train_data$fixed.acidity)
+sd_acidity <- sd(train_data$fixed.acidity)
+train_data <- train_data[train_data$fixed.acidity < (mean_acidity + 2*sd_acidity), ]
+train_data <- train_data[train_data$fixed.acidity > (mean_acidity - 2*sd_acidity), ]
+summary(train_data)
+
+# Still outliers in Residual Sugar
+mean_sugar <- mean(train_data$residual.sugar)
+sd_sugar <- sd(train_data$residual.sugar)
+
+train_data <- train_data[train_data$residual.sugar < (mean_sugar + 2*sd_sugar), ]
+train_data <- train_data[train_data$residual.sugar > (mean_sugar - 2*sd_sugar), ]
+summary(train_data)
+
+# The same process for Free Sulfur Dioxide
+mean_sulfur <- mean(train_data$free.sulfur.dioxide)
+sd_sulfur <- sd(train_data$free.sulfur.dioxide)
+
+train_data <- train_data[train_data$free.sulfur.dioxide < (mean_sulfur + 2*sd_sulfur), ]
+train_data <- train_data[train_data$free.sulfur.dioxide > (mean_sulfur - 2*sd_sulfur), ]
+summary(train_data)
+
+###########################################################################
+# Now, run the same previous validations as without removing outliers     #
+###########################################################################
+  
+# Normalize the data (Removing quality)
+meanTrainFeatures = colMeans(train_data[,-12]) #mean of each feature
+stdTrainFeatures = apply(train_data[,-12], 2, sd) #std of each feature
+
+meanTrainFeatures
+stdTrainFeatures
+
+train_data[,-12] = sweep(train_data[,-12], 2, meanTrainFeatures, "-")
+train_data[,-12] = sweep(train_data[,-12], 2, meanTrainFeatures, "/")
+
+val_data[,-12] = sweep(val_data[,-12], 2, meanTrainFeatures, "-")
+val_data[,-12] = sweep(val_data[,-12], 2, meanTrainFeatures, "/")
+
+#test_data[,-12] = sweep(test_data[,-12], 2, meanTrainFeatures, "-")
+#test_data[,-12] = sweep(test_data[,-12], 2, meanTrainFeatures, "/")
+
+train_data$quality <- as.factor(train_data$quality)
+val_data$quality <- as.factor(val_data$quality)
+
+summary(train_data)
+summary(val_data)
+
+cor(train_data[,-12])
+pairs(~., data = train_data[,-12])
+
+logistic.train(train_data, val_data)
+
+
+#############################################################
+# Balance the Data - Process 1 - decrease the higher        #
+#############################################################
+bad_wines <- train_data[train_data$quality==0,]
+sample_wines <- sample(1:nrow(bad_wines), sum(train_data$quality==1))
+bad_wines <- bad_wines[sample_wines,]
+
+balanced_train <- rbind(bad_wines, train_data[train_data$quality==1,])
+logistic.train(balanced_train, val_data)
+
+#############################################################
+# Balance the Data - Process 2 - create sample data         #
+#############################################################
+library(DMwR)
+smoted_data <- SMOTE(quality~., train_data, perc.over=400, perc.under = 125)
+
+logistic.train(smoted_data, val_data)
+
+  
