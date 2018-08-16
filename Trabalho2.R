@@ -7,8 +7,8 @@
 library(glmnet)
 
 set.seed(42)
-#setwd("/Users/thiagom/Documents/Studies/Unicamp/MDC/INF-615/Tarefas/INF0615_Tarefa2/")
-setwd("C:\\Users\\rafaelr\\Documents\\INF015\\Tarefa2\\INF0615_Tarefa2")
+setwd("/Users/thiagom/Documents/Studies/Unicamp/MDC/INF-615/Tarefas/INF0615_Tarefa2/")
+#setwd("C:\\Users\\rafaelr\\Documents\\INF015\\Tarefa2\\INF0615_Tarefa2")
 
 confusion_matrix <- function(true_value, predicted_value, print_value=FALSE) {
   #converting to class
@@ -114,3 +114,19 @@ cor(train_data[,-12])
 pairs(~., data = train_data[,-12])
 
 logistic.train(train_data, val_data)
+
+
+#############################################################
+# Balance the Data - Process 1 - decrease the higher        #
+#############################################################
+bad_wines <- train_data[train_data$quality==0,]
+sample_wines <- sample(1:nrow(bad_wines), sum(train_data$quality==1))
+bad_wines <- bad_wines[sample_wines,]
+
+balanced_train <- rbind(bad_wines, train_data[train_data$quality==1,])
+logistic.train(balanced_train, val_data)
+
+#############################################################
+# Balance the Data - Process 2 - create sample data         #
+#############################################################
+
