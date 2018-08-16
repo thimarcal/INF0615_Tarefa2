@@ -129,4 +129,9 @@ logistic.train(balanced_train, val_data)
 #############################################################
 # Balance the Data - Process 2 - create sample data         #
 #############################################################
+library(DMwR)
+smoted_data <- SMOTE(quality~., train_data, perc.over=400, perc.under = 125)
+
+logistic.train(smoted_data, val_data)
+
 
