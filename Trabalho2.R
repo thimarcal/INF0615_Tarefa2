@@ -1,14 +1,14 @@
 ########################################################################
 # INF-0615 - Tarefa 2 - Wine Quality                                   #
 # Alunos: Rafael Fernando Ribeiro                                      #
-#         Thiago Gomes Marçal Pereira                                  #
+#         Thiago Gomes MarÃ§al Pereira                                  #
 ########################################################################
 #install.packages("glmnet")
 library(glmnet)
 
 set.seed(42)
-setwd("/Users/thiagom/Documents/Studies/Unicamp/MDC/INF-615/Tarefas/INF0615_Tarefa2/")
-#setwd("C:\\Users\\rafaelr\\Documents\\INF015\\Tarefa2\\INF0615_Tarefa2")
+#setwd("/Users/thiagom/Documents/Studies/Unicamp/MDC/INF-615/Tarefas/INF0615_Tarefa2/")
+setwd("C:\\Users\\rafaelr\\Documents\\INF015\\Tarefa2\\INF0615_Tarefa2")
 
 confusion_matrix <- function(true_value, predicted_value, print_value=FALSE) {
   #converting to class
@@ -64,13 +64,13 @@ logistic.train <- function(train_data, val_data, test_data) {
     model <- glmnet(x, y,  family="binomial", alpha=0, lambda = lambda[i])
     
     trainPred <- predict(model,newx = x, type="response")
-    accPerLambda$accTrain[i] <- confusion_matrix(y, trainPred)
+    accPerLambda$accTrain[i] <- confusion_matrix(y, trainPred, TRUE)
     
     valPred <- predict(model,newx = x_val, type="response")
-    accPerLambda$accVal[i] <- confusion_matrix(val_data$quality, valPred)
+    accPerLambda$accVal[i] <- confusion_matrix(val_data$quality, valPred, TRUE)
     
-    testPred <- predict(model,newx = test_val, type="response")
-    accPerLambda$accTest[i] <- confusion_matrix(test_data$quality, testPred)
+    #testPred <- predict(model,newx = test_val, type="response")
+    #accPerLambda$accTest[i] <- confusion_matrix(test_data$quality, testPred, TRUE)
   }
   
   print(accPerLambda)
@@ -296,9 +296,9 @@ cor(train_data[,-12])
 
 x <- model.matrix(quality~.+0+I(fixed.acidity^3) + I(volatile.acidity^3)+I(citric.acid) + I(residual.sugar^3)
                   + I(chlorides^3) + I(free.sulfur.dioxide^3) + I(total.sulfur.dioxide^3) + I(density^3)
-                  + I(pH^3) + I(sulphates^3) + I(alcohol^3), train_data)
+                  + I(pH^3) + I(sulphates^3) + I(alcohol^3), smoted_data)
 
-y <- train_data$quality
+y <- smoted_data$quality
 
 x_val <- model.matrix(quality~.+0+I(fixed.acidity^3) + I(volatile.acidity^3)+I(citric.acid) + I(residual.sugar^3)
                       + I(chlorides^3) + I(free.sulfur.dioxide^3) + I(total.sulfur.dioxide^3) + I(density^3)
@@ -323,3 +323,22 @@ accTrain
 accVal
 accTest
 
+# Final model
+x <- model.matrix(quality~.+0, smoted_data)
+
+y <- smoted_data$quality
+
+x_val <- model.matrix(quality~.+0, val_data)
+
+test_val <- model.matrix(quality~.+0,test_data)
+
+model <- glmnet(x, y,  family="binomial", alpha=0, lambda = 0.001)
+
+trainPred <- predict(model,newx = x, type="response")
+accTrain <- confusion_matrix(y, trainPred, TRUE)
+
+valPred <- predict(model,newx = x_val, type="response")
+accVal <- confusion_matrix(val_data$quality, valPred, TRUE)
+
+testPred <- predict(model,newx = test_val, type="response")
+accTest <- confusion_matrix(test_data$quality, testPred, TRUE)
